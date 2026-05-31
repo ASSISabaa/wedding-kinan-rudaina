@@ -195,11 +195,27 @@ footer strong{color:var(--pampas-gold);font-weight:400}
     <h2 class="rvt r">تأكيد الحضور</h2>
     <p class="rvs r">نرجو إبلاغنا بموقفكم من الحضور لتأكيد الترتيبات</p>
     <div class="rvf r" id="rf">
-      <input class="ri" type="text" id="rn" placeholder="الاسم الكامل" autocomplete="name"/>
-      <input class="ri" type="tel" id="rp" placeholder="رقم الهاتف" autocomplete="tel"/>
-      <select class="rs" id="rg"><option value="">عدد الحضور</option><option value="1">١ شخص</option><option value="2">٢ أشخاص</option><option value="3">٣ أشخاص</option><option value="4">٤ أشخاص</option><option value="5">٥ أشخاص</option><option value="6">٦ أشخاص</option></select>
-      <select class="rs" id="rc"><option value="">هل ستحضرون؟</option><option value="yes">✓ نعم، سنحضر بكل سرور</option><option value="no">✗ للأسف لن نتمكن من الحضور</option></select>
-      <button class="rb" onclick="doRSVP()">تأكيد الحضور المسبق</button>
+      <form name="rsvp" method="POST" data-netlify="true" netlify-honeypot="bot-field" id="rsvp-form">
+        <input type="hidden" name="form-name" value="rsvp"/>
+        <input type="hidden" name="bot-field"/>
+        <input class="ri" type="text" name="name" id="rn" placeholder="الاسم الكامل" autocomplete="name" required/>
+        <input class="ri" type="tel" name="phone" id="rp" placeholder="رقم الهاتف" autocomplete="tel"/>
+        <select class="rs" name="guests" id="rg" required>
+          <option value="">عدد الحضور</option>
+          <option value="1">١ شخص</option>
+          <option value="2">٢ أشخاص</option>
+          <option value="3">٣ أشخاص</option>
+          <option value="4">٤ أشخاص</option>
+          <option value="5">٥ أشخاص</option>
+          <option value="6">٦ أشخاص</option>
+        </select>
+        <select class="rs" name="attending" id="rc" required>
+          <option value="">هل ستحضرون؟</option>
+          <option value="سيحضر">✓ نعم، سنحضر بكل سرور</option>
+          <option value="لن يحضر">✗ للأسف لن نتمكن من الحضور</option>
+        </select>
+        <button type="submit" class="rb">تأكيد الحضور المسبق</button>
+      </form>
     </div>
     <div class="rd" id="rd"><p>شكراً جزيلاً لردكم 🤍<br>نتطلع لرؤيتكم ومشاركتنا أسعد لحظات عمرنا.</p></div>
   </div>
@@ -226,40 +242,26 @@ function tick(){
 }
 tick();setInterval(tick,1000);
 
-function doRSVP(){
+document.getElementById('rsvp-form').addEventListener('submit', function(e){
+  e.preventDefault();
   var n=document.getElementById('rn').value.trim();
-  var p=document.getElementById('rp').value.trim();
   var g=document.getElementById('rg').value;
   var c=document.getElementById('rc').value;
   if(!n||!g||!c){alert('يرجى تعبئة الحقول الأساسية');return}
   var btn=document.querySelector('.rb');
   btn.textContent='جاري الإرسال...';
   btn.disabled=true;
-  var SHEET_URL='https://script.google.com/macros/s/AKfycbydt-97_yQeoNQPcLF_jujdPuUPZpYZc8XedkSDmOHG_uyykVLSbJTDY5yGqrcF30oU/exec';
-  var params='name='+encodeURIComponent(n)+'&phone='+encodeURIComponent(p)+'&guests='+encodeURIComponent(g)+'&attending='+encodeURIComponent(c==='yes'?'سيحضر':'لن يحضر');
-  var done=false;
-  function showSuccess(){
-    if(done)return;
-    done=true;
-    document.getElementById('rf').style.display='none';
-    document.getElementById('rd').classList.add('show');
-  }
-  // طريقة 1: fetch no-cors
-  fetch(SHEET_URL+'?'+params,{method:'GET',mode:'no-cors'}).then(function(){showSuccess();}).catch(function(){});
-  // طريقة 2: XMLHttpRequest
-  try{
-    var xhr=new XMLHttpRequest();
-    xhr.open('GET',SHEET_URL+'?'+params,true);
-    xhr.send();
-  }catch(e){}
-  // طريقة 3: Image beacon
-  try{
-    var img=new Image();
-    img.src=SHEET_URL+'?'+params+'&t='+Date.now();
-  }catch(e){}
-  // إظهار النجاح بعد ثانيتين على أي حال
-  setTimeout(showSuccess,2000);
-}
+  var formData=new FormData(this);
+  fetch('/',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(formData).toString()})
+    .then(function(){
+      document.getElementById('rf').style.display='none';
+      document.getElementById('rd').classList.add('show');
+    })
+    .catch(function(){
+      document.getElementById('rf').style.display='none';
+      document.getElementById('rd').classList.add('show');
+    });
+});
 
 function addToCalendar(){
   var isAndroid=/Android/.test(navigator.userAgent);
